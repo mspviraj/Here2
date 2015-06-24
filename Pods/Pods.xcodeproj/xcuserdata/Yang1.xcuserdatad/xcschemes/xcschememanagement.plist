@@ -8,25 +8,31 @@
 		<dict>
 			<key>isShown</key>
 			<false/>
-			<key>orderHint</key>
-			<integer>1</integer>
+		</dict>
+		<key>Pods-MyLocations-FMDB.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
 		</dict>
 		<key>Pods-MyLocations.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
-			<key>orderHint</key>
-			<integer>0</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>08B52562515660EBE35C4191</key>
+		<key>1F75BD0622F9F29B31F652EC</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>F252A4DC08FBF624A59BE051</key>
+		<key>72B3189D34B9D4ECAAC93782</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>872C81B25CFDD43F08C31697</key>
 		<dict>
 			<key>primary</key>
 			<true/>

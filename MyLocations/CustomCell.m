@@ -8,6 +8,8 @@
 
 #import "CustomCell.h"
 #import "UIImage+ResizeAndCrop.h"
+#import "AFNetworking.h"
+#import "ISDiskCache.h"
 
 @interface CustomCell ()
 
@@ -69,9 +71,61 @@
     _date = object.createdAt;
     
     if([_fileType isEqualToString:@"image"]){
-        NSURL *imageFileUrl = [[NSURL alloc] initWithString:_file.url];
-        NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
-        _image = [UIImage imageWithData:imageData];
+        ISDiskCache *diskCache = [ISDiskCache sharedCache];
+        if ([diskCache hasObjectForKey:_file.url]) {
+            NSLog(@"Cache hasImage");
+            dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+            dispatch_async(queue, ^{
+                _image = [diskCache objectForKey:_file.url];
+                UIImage *smallImage = [diskCache objectForKey:[NSString stringWithFormat:@"%@.thumbnail",_file.url]];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.imageButton setImage:smallImage forState:UIControlStateNormal];
+                });
+            });
+        }
+        else {
+            NSLog(@"Cache noImage");
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFImageResponseSerializer serializer];
+            [manager GET:_file.url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSLog(@"image: %@",responseObject);
+                _image = responseObject;
+                if(_image){
+                    UIImage *smallImage = [_image imageByScalingAndCroppingForSize:self.imageButton.frame.size];
+                    [diskCache setObject:_image forKey:_file.url];
+                    [diskCache setObject:smallImage forKey:[NSString stringWithFormat:@"%@.thumbnail",_file.url]];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [self.imageButton setImage:smallImage forState:UIControlStateNormal];
+                    });
+                }
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"AFNetworking error: %@",error);
+            }];
+//            NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+//            [NSURLConnection sendAsynchronousRequest:request
+//                                               queue:self.operationQueue
+//                                   completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+//                                       UIImage *image = [UIImage imageWithData:data];
+//                                       if (image) {
+//                                           [diskCache setObject:image forKey:URL];
+//                                           dispatch_async(dispatch_get_main_queue(), ^{
+//                                               UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+//                                               cell.imageView.image = image;
+//                                           });
+//                                       }
+//                                   }];
+        }
+        
+        
+        
+//        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+//        manager.responseSerializer = [AFImageResponseSerializer serializer];
+//        [manager GET:_file.url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+//            NSLog(@"image: %@",responseObject);
+//            _image = responseObject;
+//        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+//            NSLog(@"Error: %@",error);
+//        }];
     }else{
         //File type is video
         NSURL *videoFileUrl = [NSURL URLWithString:_file.url];
@@ -92,8 +146,9 @@
     self.commentLabel.text = _descriptionText;
     self.distanceLabel.text = [NSString stringWithFormat:@"%.1f miles from here.",distance/1609];
     
-    UIImage *smallImage = [_image imageByScalingAndCroppingForSize:self.imageButton.frame.size];
-    [self.imageButton setImage:smallImage forState:UIControlStateNormal];
+    //UIImage *smallImage = [_image imageByScalingAndCroppingForSize:self.imageButton.frame.size];
+    [self.imageButton setBackgroundColor:[UIColor lightGrayColor]];
+    //[self.imageButton setImage:smallImage forState:UIControlStateNormal];
     
     
     

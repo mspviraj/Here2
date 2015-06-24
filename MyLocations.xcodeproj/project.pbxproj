@@ -36,6 +36,7 @@
 		9E0F00601B30E82F00EE2953 /* SYFrameHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 9E0F005F1B30E82F00EE2953 /* SYFrameHelper.m */; };
 		9E11B0EB1B1BBCA200788240 /* PostDetailViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9E11B0EA1B1BBCA200788240 /* PostDetailViewController.m */; };
 		9E355E041B1779FE008F45FA /* CustomCellForOneUser.m in Sources */ = {isa = PBXBuildFile; fileRef = 9E355E031B1779FE008F45FA /* CustomCellForOneUser.m */; };
+		9E40947B1B372FD4008E3FEA /* ISDiskCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 9E40947A1B372FD4008E3FEA /* ISDiskCache.m */; };
 		9E4176A31AFBD6120074E385 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4176A21AFBD6120074E385 /* CFNetwork.framework */; };
 		9E4176AE1AFBD6AD0074E385 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4176A41AFBD6AD0074E385 /* Accounts.framework */; };
 		9E4176AF1AFBD6AD0074E385 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E4176A51AFBD6AD0074E385 /* AudioToolbox.framework */; };
@@ -55,6 +56,7 @@
 		9EBA3A2E1B151A5600ECC77C /* SenderPostsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9EBA3A2D1B151A5600ECC77C /* SenderPostsController.m */; };
 		9EBA3A341B15FF3400ECC77C /* ImageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9EBA3A331B15FF3400ECC77C /* ImageViewController.m */; };
 		9ECA18721AFB1D4C006A9EEC /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = 9ECA18711AFB1D4C006A9EEC /* UIImage+Resize.m */; };
+		9EEC74E41B39F8D400ABFFDA /* PracticeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9EEC74E31B39F8D400ABFFDA /* PracticeViewController.m */; };
 		9EFB89B51B012ACD000FA747 /* LocationSingleton.m in Sources */ = {isa = PBXBuildFile; fileRef = 9EFB89B41B012ACD000FA747 /* LocationSingleton.m */; };
 		9EFC663F1B1AB61500581D9F /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EFC663E1B1AB61500581D9F /* Bolts.framework */; };
 		9EFC66411B1AB61800581D9F /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EFC66401B1AB61800581D9F /* Parse.framework */; };
@@ -117,6 +119,8 @@
 		9E11B0EA1B1BBCA200788240 /* PostDetailViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PostDetailViewController.m; sourceTree = "<group>"; };
 		9E355E021B1779FE008F45FA /* CustomCellForOneUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomCellForOneUser.h; sourceTree = "<group>"; };
 		9E355E031B1779FE008F45FA /* CustomCellForOneUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CustomCellForOneUser.m; sourceTree = "<group>"; };
+		9E4094791B372FD3008E3FEA /* ISDiskCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ISDiskCache.h; sourceTree = "<group>"; };
+		9E40947A1B372FD4008E3FEA /* ISDiskCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ISDiskCache.m; sourceTree = "<group>"; };
 		9E4176A21AFBD6120074E385 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		9E4176A41AFBD6AD0074E385 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
 		9E4176A51AFBD6AD0074E385 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -143,6 +147,8 @@
 		9EBA3A331B15FF3400ECC77C /* ImageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageViewController.m; sourceTree = "<group>"; };
 		9ECA18701AFB1D4C006A9EEC /* UIImage+Resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Resize.h"; sourceTree = "<group>"; };
 		9ECA18711AFB1D4C006A9EEC /* UIImage+Resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Resize.m"; sourceTree = "<group>"; };
+		9EEC74E21B39F8D400ABFFDA /* PracticeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PracticeViewController.h; sourceTree = "<group>"; };
+		9EEC74E31B39F8D400ABFFDA /* PracticeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PracticeViewController.m; sourceTree = "<group>"; };
 		9EFB89B31B012ACD000FA747 /* LocationSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocationSingleton.h; sourceTree = "<group>"; };
 		9EFB89B41B012ACD000FA747 /* LocationSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LocationSingleton.m; sourceTree = "<group>"; };
 		9EFC663E1B1AB61500581D9F /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Bolts.framework; path = "../../parse-library-1.7.4/Bolts.framework"; sourceTree = "<group>"; };
@@ -294,6 +300,8 @@
 				9E0F00591B2F1F4200EE2953 /* UserSingleton.m */,
 				9E0F005E1B30E82F00EE2953 /* SYFrameHelper.h */,
 				9E0F005F1B30E82F00EE2953 /* SYFrameHelper.m */,
+				9E4094791B372FD3008E3FEA /* ISDiskCache.h */,
+				9E40947A1B372FD4008E3FEA /* ISDiskCache.m */,
 				9EBA3A261B11074800ECC77C /* CustomCell.h */,
 				9EBA3A271B11074800ECC77C /* CustomCell.m */,
 				9E355E021B1779FE008F45FA /* CustomCellForOneUser.h */,
@@ -304,6 +312,8 @@
 				9EBA3A331B15FF3400ECC77C /* ImageViewController.m */,
 				9E11B0E91B1BBCA200788240 /* PostDetailViewController.h */,
 				9E11B0EA1B1BBCA200788240 /* PostDetailViewController.m */,
+				9EEC74E21B39F8D400ABFFDA /* PracticeViewController.h */,
+				9EEC74E31B39F8D400ABFFDA /* PracticeViewController.m */,
 			);
 			path = MyLocations;
 			sourceTree = "<group>";
@@ -474,6 +484,7 @@
 				7BCEA6A8180425D70001FAC5 /* SecondViewController.m in Sources */,
 				7BCEA757180C21CD0001FAC5 /* DataModel.xcdatamodeld in Sources */,
 				9EFB89B51B012ACD000FA747 /* LocationSingleton.m in Sources */,
+				9EEC74E41B39F8D400ABFFDA /* PracticeViewController.m in Sources */,
 				9EBA3A2B1B14F36A00ECC77C /* UIImage+ResizeAndCrop.m in Sources */,
 				7BCEA69F180425D70001FAC5 /* AppDelegate.m in Sources */,
 				9EBA3A281B11074800ECC77C /* CustomCell.m in Sources */,
@@ -487,6 +498,7 @@
 				9E355E041B1779FE008F45FA /* CustomCellForOneUser.m in Sources */,
 				9E4176BD1AFBDD160074E385 /* SignupViewController.m in Sources */,
 				9E0F00601B30E82F00EE2953 /* SYFrameHelper.m in Sources */,
+				9E40947B1B372FD4008E3FEA /* ISDiskCache.m in Sources */,
 				7BCEA760180D75770001FAC5 /* LocationsViewController.m in Sources */,
 				7BCEA70E180854D40001FAC5 /* CategoryPickerViewController.m in Sources */,
 				9ECA18721AFB1D4C006A9EEC /* UIImage+Resize.m in Sources */,

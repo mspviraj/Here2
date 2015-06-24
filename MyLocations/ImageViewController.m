@@ -7,6 +7,8 @@
 //
 
 #import "ImageViewController.h"
+#import "ISDiskCache.h"
+
 
 @interface ImageViewController ()
 
@@ -17,10 +19,15 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    ISDiskCache *diskCache = [ISDiskCache sharedCache];
     PFFile *imageFile = [self.object objectForKey:@"file"];
-    NSURL *imageFileUrl = [[NSURL alloc] initWithString:imageFile.url];
-    NSData *imageData = [NSData dataWithContentsOfURL:imageFileUrl];
-    self.imageView.image = [UIImage imageWithData:imageData];
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        UIImage *image = [diskCache objectForKey:imageFile.url];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.imageView.image = image;
+        });
+    });
     
     NSString *senderName = [self.object objectForKey:@"senderName"];
     NSString *title = [NSString stringWithFormat:@"%@", senderName];

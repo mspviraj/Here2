@@ -20,11 +20,18 @@ PODS:
   - AFNetworking/UIKit (2.5.3):
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
+  - FMDB (2.5):
+    - FMDB/standard (= 2.5)
+  - FMDB/common (2.5)
+  - FMDB/standard (2.5):
+    - FMDB/common
 
 DEPENDENCIES:
   - AFNetworking (= 2.5.3)
+  - FMDB
 
 SPEC CHECKSUMS:
   AFNetworking: e1d86c2a96bb5d2e7408da36149806706ee122fe
+  FMDB: 96e8f1bcc1329e269330f99770ad4285d9003e52
 
 COCOAPODS: 0.37.2

@@ -5,6 +5,8 @@ target 'MyLocations' do
 
 pod 'AFNetworking', '2.5.3'
 
+pod 'FMDB'
+
 end
 
 target 'MyLocationsTests' do
