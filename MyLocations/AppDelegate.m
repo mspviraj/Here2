@@ -10,6 +10,7 @@
 #import "LocationsViewController.h"
 #import "MapViewController.h"
 #import <Parse/Parse.h>
+#import "FMDB.h"
 
 NSString * const ManagedObjectContextSaveDidFailNotification = @"ManagedObjectContextSaveDidFailNotification";
 @interface AppDelegate () <UIAlertViewDelegate>
@@ -32,17 +33,26 @@ NSString * const ManagedObjectContextSaveDidFailNotification = @"ManagedObjectCo
     // [Optional] Track statistics around application opens.
     [PFAnalytics trackAppOpenedWithLaunchOptions:launchOptions];
     
+    NSArray  *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *docsPath = [paths objectAtIndex:0];
+    NSString *dbPath = [docsPath stringByAppendingPathComponent:@"portrait.db"];
+    NSLog(@"file path is: %@",docsPath);
+    FMDatabase *db = [FMDatabase databaseWithPath:dbPath];
+    
+    if(![db open]){
+        NSLog(@"Can't open and create database");
+    }
+    else{
+        NSLog(@"create database successfully");
+        BOOL success;
+        success = [db executeUpdate:@"create table if not exists portrait (objectId text, url text)"];
+        if (!success) {
+            NSLog(@"%s: create table error: %@", __FUNCTION__, [db lastErrorMessage]);
+        }
+    }
+    [db close];
     
     
-    
-    NSLog(@"%@",[[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject]);
-
-//  UITabBarController *tabBarController = (UITabBarController *)self.window.rootViewController;
-//
-//  UINavigationController *navigationController = (UINavigationController *)tabBarController.viewControllers[1];
-//  LocationsViewController *locationsViewController = (LocationsViewController *)navigationController.viewControllers[1];
-//
-//  MapViewController *mapViewController = (MapViewController *)tabBarController.viewControllers[0];
   return YES;
 }
 							

@@ -144,7 +144,7 @@
         ImageViewController *controller = (ImageViewController *)segue.destinationViewController;
         UITableViewCell *cell = (UITableViewCell *)[[sender superview]superview];
         NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
-        controller.object = objectsFound[indexPath.row];
+        //controller.object = objectsFound[indexPath.row];
         //NSLog(@"imageButton's supersuper view is %@",(UITableViewCell *)[[sender superview]superview]);
         
     } else if ([segue.identifier isEqualToString:@"showPostDetail"]){

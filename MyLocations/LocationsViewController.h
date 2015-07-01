@@ -10,11 +10,14 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import "ImageViewController.h"
 #import "SYFrameHelper.h"
+#import "CustomCell.h"
 
 
-@interface LocationsViewController : UITableViewController
+@interface LocationsViewController : UITableViewController <CustomCellDelegate>
 
 @property (strong,nonatomic) MPMoviePlayerController *moviePlayer;
+
+@property (strong,nonatomic) UIImage *imageToImageViewController;
 
 
 - (IBAction)imageButtonPushed:(id)sender;

@@ -26,14 +26,19 @@
     NSString *dbPath = [docsPath stringByAppendingPathComponent:@"test.db"];
     NSLog(@"file path is: %@",docsPath);
     FMDatabase *db = [FMDatabase databaseWithPath:dbPath];
-    if (![db open]) {
-        return;
-    }
+//    if (![db open]) {
+//        return;
+//    }
+    [db open];
+    
+    
+    
     BOOL success;
     success = [db executeUpdate:@"create table if not exists test (objectId text, address text, category text, fileType text, latitude double, longitude double, comment text, senderId text, senderName text, date double)"];
     if (!success) {
         NSLog(@"%s: create table error: %@", __FUNCTION__, [db lastErrorMessage]);
     }
+    
     
     
 
@@ -73,9 +78,19 @@
         }
     }];
     
+    FMResultSet *resultSet = [db executeQuery:@"select address FROM test where senderId= ?",@"b5FFiQwde6"];
+//    while ([resultSet next]) {
+//        NSLog(@"address is %@",resultSet[0]);
+//        
+//    }
+    if([resultSet next]){
+        NSLog(@"found it");
+    }
+    else{
+        NSLog(@"found nothing");
+    }
 
-
-
+    [db close];
     
 
     

@@ -71,6 +71,8 @@
 - (void)viewDidLoad
 {
   [super viewDidLoad];
+    
+    
 //  [self updateLocations];
 //
 //  if ([objectsFound count] > 0) {

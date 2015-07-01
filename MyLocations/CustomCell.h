@@ -11,10 +11,22 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import "SYFrameHelper.h"
 
+@protocol CustomCellDelegate <NSObject>
+
+- (void)imageTapped:(UIImage *)image;
+
+@end
+
+
 @interface CustomCell : UITableViewCell
 
 @property (strong,nonatomic) CLLocation *currentLocation;
 
+@property (weak,nonatomic) id <CustomCellDelegate> delegate;
+
+@property (strong,nonatomic) NSMutableArray *arrayOfUrls;
+
+@property (strong,nonatomic) NSString *portraitStringOfUrl;
 
 + (CGFloat)heightForPFObject:(PFObject *)object;
 

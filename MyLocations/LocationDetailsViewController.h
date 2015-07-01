@@ -16,5 +16,9 @@
 @property (nonatomic, assign) CLLocationCoordinate2D coordinate;
 @property (nonatomic, strong) CLPlacemark *placemark;
 
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+
+
+- (IBAction)addPhoto:(id)sender;
 
 @end

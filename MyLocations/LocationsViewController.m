@@ -108,6 +108,8 @@
         }
     }];
     
+    
+    //set autolayout to calculate cell height
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 44;
 
@@ -136,11 +138,7 @@
   }
   else if ([segue.identifier isEqualToString:@"showImage"]){
       ImageViewController *controller = (ImageViewController *)segue.destinationViewController;
-      UITableViewCell *cell = (UITableViewCell *)[[sender superview]superview];
-      NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
-      controller.object = objectsFound[indexPath.row];
-      //NSLog(@"imageButton's supersuper view is %@",(UITableViewCell *)[[sender superview]superview]);
-
+      controller.image = self.imageToImageViewController;
   }
   else if ([segue.identifier isEqualToString:@"showPostDetail"]){
       UINavigationController *navigationController = (UINavigationController *)segue.destinationViewController;
@@ -194,7 +192,9 @@
     
     static NSString *cellIdentifier = @"Cell";
     CustomCell *cell = (CustomCell *)[tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
+    cell.delegate = self;
     cell.currentLocation = _newLocation;
+    cell.arrayOfUrls = [NSMutableArray array];
     [cell configureCellForPFObject:object];
 
     return cell;
@@ -253,9 +253,12 @@
 }
 
 
+#pragma mark - CustomCellDelegate methods
 
-
-
+- (void)imageTapped:(UIImage *)image{
+    self.imageToImageViewController = image;
+    [self performSegueWithIdentifier:@"showImage" sender:self];
+}
 
 
 
