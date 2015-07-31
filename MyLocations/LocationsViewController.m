@@ -14,6 +14,10 @@
 #import "CustomCell.h"
 #import "SenderPostsController.h"
 #import "PostDetailViewController.h"
+#import "ISDiskCache.h"
+#import "FMDB.h"
+#import "AFNetworking.h"
+#import "UIImage+ResizeAndCrop.h"
 
 
 @interface LocationsViewController ()
@@ -24,27 +28,25 @@
 {
     CLLocation *_newLocation;
     NSArray *objectsFound;
-    CGFloat screen_width;
     
-    PFFile *_file;
-    NSString *_fileType;
-    NSString *_senderName;
-    NSString *_senderId;
-    NSString *_descriptionText;
-    NSString *_address;
-    NSString *_categoryName;
-    NSDate *_date;
-    UIImage *_image;
-    NSString *_videoFilePath;
+//    PFFile *_file;
+//    NSString *_fileType;
+//    NSString *_senderName;
+//    NSString *_senderId;
+//    NSString *_descriptionText;
+//    NSString *_address;
+//    NSString *_categoryName;
+//    NSDate *_date;
+//    UIImage *_image;
+//    NSString *_videoFilePath;
     PFGeoPoint *_userPoint;
     
-    NSMutableArray *_rowHeights;
+    NSMutableArray *_stringOfPortraitUrls;
 }
 
 
 - (id)initWithCoder:(NSCoder *)aDecoder{
     if ((self = [super initWithCoder:aDecoder])){
-        screen_width = CGRectGetWidth([UIScreen mainScreen].bounds);
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playerPlaybackDidFinish:) name:MPMoviePlayerPlaybackDidFinishNotification object:self.moviePlayer];
     }
@@ -63,13 +65,15 @@
 {
   [super viewDidLoad];
     
+    //set autolayout to calculate cell height
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
+    self.tableView.estimatedRowHeight = 44;
+    
+    _stringOfPortraitUrls = [NSMutableArray array];
     self.moviePlayer = [[MPMoviePlayerController alloc] init];
     
     PFUser *currentUser = [PFUser currentUser];
-    if(currentUser){
-        NSLog(@"current user: %@", currentUser.username);
-    }
-    else{
+    if(self.currentUserPostsViewController && !currentUser){
         [self performSegueWithIdentifier:@"showLogin" sender:self];
     }
     
@@ -79,39 +83,53 @@
     _newLocation = [singleton getLocation];
     
     
-    
-    
-    
-    PFQuery *query = [PFQuery queryWithClassName:@"Messages"];
-    PFGeoPoint *point = [PFGeoPoint geoPointWithLocation:_newLocation];
-    [query whereKey:@"position" nearGeoPoint:point withinMiles:200];
-    query.limit = 30;
-    //objectsFound = [query findObjects];
-    
-    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
-        if (error) {
-            NSLog(@"Error: %@ %@", error, [error userInfo]);
+    //deal with it in viewWillAppear
+    if(self.currentUserPostsViewController){
+        [self.navigationItem.leftBarButtonItem setTitle:@"New Post"];
+        return;
+    }
+    //deal with the other 3 circumstances
+    else{
+        PFQuery *query;
+        query = [PFQuery queryWithClassName:@"Messages"];
+        query.limit = 30;
+
+        if(self.allPostsViewController){
+            PFGeoPoint *userPosition = [PFGeoPoint geoPointWithLocation:_newLocation];
+            [query whereKey:@"position" nearGeoPoint:userPosition withinMiles:200];
+            self.navigationItem.leftBarButtonItem = nil;
+            self.navigationItem.rightBarButtonItem = nil;
         }
-        else {
-            // We found messages!
-            objectsFound = objects;
-            NSLog(@"Retrieved %lu messages", (unsigned long)objectsFound.count);
-            
-            //cache for cell height
-            NSMutableArray *heights = [NSMutableArray new];
-            for (int i = 0; i < objectsFound.count; i++){
-                [heights addObject: [NSNull null]];
+        else if(self.senderId != nil){
+            [query whereKey:@"senderId" equalTo:self.senderId];
+            [query orderByDescending:@"createdAt"];
+            self.navigationItem.rightBarButtonItem = nil;
+        }
+        else if(self.PFObjectFromMapView != nil){
+            PFGeoPoint *postPosition = [self.PFObjectFromMapView objectForKey:@"position"];
+            [query whereKey:@"position" nearGeoPoint:postPosition];
+            self.navigationItem.rightBarButtonItem = nil;
+        }
+        
+        //objectsFound = [query findObjects]; 这样写会很慢，因为占用了main thread
+        [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+            if (error) {
+                NSLog(@"Error: %@ %@", error, [error userInfo]);
             }
-            _rowHeights = heights;
-            
-            [self.tableView reloadData];
-        }
-    }];
-    
-    
-    //set autolayout to calculate cell height
-    self.tableView.rowHeight = UITableViewAutomaticDimension;
-    self.tableView.estimatedRowHeight = 44;
+            else {
+                // We found messages!
+                objectsFound = objects;
+                NSLog(@"Retrieved %lu messages", (unsigned long)objectsFound.count);
+                
+                //set the navigation bar title
+                if(self.senderId != nil){
+                    self.navigationItem.title = [[objectsFound lastObject] objectForKey:@"senderName"];
+                }
+                
+                [self.tableView reloadData];
+            }
+        }];
+    }
 
 }
 
@@ -119,7 +137,29 @@
 - (void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     
+    if(self.currentUserPostsViewController){
+        PFQuery *query = [PFQuery queryWithClassName:@"Messages"];
+        [query whereKey:@"senderId" equalTo:[[PFUser currentUser]objectId]];
+        [query orderByDescending:@"createdAt"];
+        query.limit = 30;
+        
+        [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+            if (error) {
+                NSLog(@"Error: %@ %@", error, [error userInfo]);
+            }
+            else {
+                // We found messages!
+                objectsFound = objects;
+                NSLog(@"Retrieved %lu messages", (unsigned long)objectsFound.count);
+
+                [self.tableView reloadData];
+            }
+        }];
+    }
+    
 }
+
+
 
 
 
@@ -127,8 +167,7 @@
 {
   if ([segue.identifier isEqualToString:@"showSenderPosts"]) {
       UINavigationController *navigationController = segue.destinationViewController;
-      SenderPostsController *controller = (SenderPostsController *)navigationController.topViewController;
-      NSLog(@"senderButton's supersuper view is %@",(UITableViewCell *)[[sender superview]superview]);
+      LocationsViewController *controller = (LocationsViewController *)navigationController.topViewController;
       UITableViewCell *cell = (UITableViewCell *)[[sender superview]superview];
       NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
       NSLog(@"senderId is %@",[objectsFound[indexPath.row] objectForKey:@"senderId"]);
@@ -139,12 +178,6 @@
   else if ([segue.identifier isEqualToString:@"showImage"]){
       ImageViewController *controller = (ImageViewController *)segue.destinationViewController;
       controller.image = self.imageToImageViewController;
-  }
-  else if ([segue.identifier isEqualToString:@"showPostDetail"]){
-      UINavigationController *navigationController = (UINavigationController *)segue.destinationViewController;
-      PostDetailViewController *controller = (PostDetailViewController *)navigationController.topViewController;
-      NSIndexPath *indexPath = [self.tableView indexPathForCell:sender];
-      controller.object = objectsFound[indexPath.row];
   }
 }
 
@@ -189,32 +222,250 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     PFObject *object = objectsFound[indexPath.row];
+    ISDiskCache *diskCache = [ISDiskCache sharedCache];
+    NSArray *mediaDataArray = [object objectForKey:@"mediaData"];
+    NSString  *mediaType = [object objectForKey:@"mediaType"];
+    NSString *senderName = [object objectForKey:@"senderName"];
+    NSString *senderId = [object objectForKey:@"senderId"];
+    NSString *descriptionText = [object objectForKey:@"text"];
+    NSString *address = [object objectForKey:@"address"];
+    NSString *categoryName = [object objectForKey:@"category"];
+    PFGeoPoint *postPosition = [object objectForKey:@"position"];
+    NSDate *date = object.createdAt;
+    CGFloat xBase = 61;
+
+    
     
     static NSString *cellIdentifier = @"Cell";
-    CustomCell *cell = (CustomCell *)[tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
-    cell.delegate = self;
-    cell.currentLocation = _newLocation;
-    cell.arrayOfUrls = [NSMutableArray array];
-    [cell configureCellForPFObject:object];
+    UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:nil];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+        
+        
+        
+        
+        //configure portrait butotn,  use FMDB to store the portrait's url string
+        UIButton *portraitButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [cell.contentView addSubview:portraitButton];
+        portraitButton.translatesAutoresizingMaskIntoConstraints = NO;
+        
+        [portraitButton addTarget:self action:@selector(showPortrait:)forControlEvents:UIControlEventTouchUpInside];
+        [portraitButton setBackgroundColor:[UIColor lightGrayColor]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:8]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
+        
+        //get FMDB
+        NSArray  *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *docsPath = [paths objectAtIndex:0];
+        NSString *dbPath = [docsPath stringByAppendingPathComponent:@"portrait.db"];
+        FMDatabase *db = [FMDatabase databaseWithPath:dbPath];
+        
+        if(![db open]){
+            NSLog(@"can't open database in UITableViewCell");
+        }
+        FMResultSet *resultSet = [db executeQuery:@"select * from portrait where objectId= ?", senderId];
+        NSString *stringOfUrl;
+        NSMutableArray *urls = [NSMutableArray array];
+        int count = 0;
+        
+        while ([resultSet next]) {
+            [urls addObject:[resultSet stringForColumn:@"url"]];
+            count++;
+        }
+        [db close];
+        
+        if(urls.count > 0){
+            NSLog(@"Found portrait url in FMDB");
+            stringOfUrl = [urls lastObject];
+            [_stringOfPortraitUrls addObject:stringOfUrl];
+            UIImage *smallImage = [diskCache objectForKey:[NSString stringWithFormat:@"%@.small",stringOfUrl]];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [portraitButton setImage:smallImage forState:UIControlStateNormal];
+            });
+        }
+        else{                                          //FMDB doesn't have url
+            PFQuery *query = [PFUser query];
+            [query whereKey:@"objectId" equalTo:_senderId];
+            [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error){
+                if(error){
+                    NSLog(@"Error: %@ %@", error, [error userInfo]);
+                }
+                else{
+                    PFUser *user = [objects lastObject];
+                    PFFile *file = [user objectForKey:@"image"];
+                    [_stringOfPortraitUrls addObject:file.url];
+                    
+                    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                    manager.responseSerializer = [AFImageResponseSerializer serializer];
+                    [manager GET:file.url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        UIImage *portrait;
+                        portrait = responseObject;
+                        if(portrait){
+                            UIImage *smallImage = [portrait imageByScalingAndCroppingForSize:CGSizeMake(45, 45)];
+                            [diskCache setObject:portrait forKey:file.url];
+                            [diskCache setObject:smallImage forKey:[NSString stringWithFormat:@"%@.small",file.url]];
+                            
+                            [db open];
+                            BOOL success;
+                            success = [db executeUpdate:@"insert into portrait(objectId,url) values(?,?)",_senderId, file.url];
+                            if (!success) {
+                                NSLog(@"%s: update table error: %@", __FUNCTION__, [db lastErrorMessage]);
+                            }
+                            [db close];
+                            
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [portraitButton setImage:smallImage forState:UIControlStateNormal];
+                            });
+                        }
+                    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                        NSLog(@"AFNetworking error: %@",error);
+                    }];
+                }
+            }];
+        }
+        
+        
+        
+        
+        //configue  senderButton
+        UIButton *senderButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        [senderButton addTarget:self
+                   action:@selector(showSenderPosts:)
+         forControlEvents:UIControlEventTouchUpInside];
+        [senderButton setTitle:senderName forState:UIControlStateNormal];
+        [senderButton.titleLabel setFont:[UIFont systemFontOfSize:18]];
+        senderButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+        senderButton.translatesAutoresizingMaskIntoConstraints = NO;
+        [cell.contentView addSubview:senderButton];
+
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:18]];
+        
+        
+        
+        
+        //configure commentLabel
+        UILabel *commentLabel = [[UILabel alloc]init];
+        commentLabel.text = descriptionText;
+        commentLabel.font = [UIFont systemFontOfSize:15];
+        commentLabel.numberOfLines = 0;
+        //commentLabel.baselineAdjustment = UIBaselineAdjustmentAlignBaselines; // or UIBaselineAdjustmentAlignCenters, or UIBaselineAdjustmentNone
+        //commentLabel.adjustsFontSizeToFitWidth = YES;
+        //commentLabel.minimumScaleFactor = 10.0f/12.0f;
+        //commentLabel.clipsToBounds = YES;
+        //commentLabel.textColor = [UIColor blackColor];
+        commentLabel.textAlignment = NSTextAlignmentLeft;
+        commentLabel.lineBreakMode = NSLineBreakByWordWrapping;
+        commentLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        [cell.contentView addSubview:commentLabel];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8 + 18 +4]];
+        
+        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
+
+        
+        
+        
+        
+        
+        //configue image views
+        for(int i=0; i<mediaDataArray.count; ++i){
+            PFFile *file = mediaDataArray[i];
+            
+            UIButton *imageButton  = [UIButton buttonWithType:UIButtonTypeCustom];
+            [imageButton addTarget:self action:@selector(showImage:) forControlEvents:UIControlEventTouchUpInside];
+            imageButton.tag = i;
+            [imageButton setBackgroundColor:[UIColor lightGrayColor]];
+            imageButton.translatesAutoresizingMaskIntoConstraints = NO;
+            [cell.contentView addSubview:imageButton];
+            
+            CGFloat xOrigin;
+            CGFloat yOrigin;
+            
+            xOrigin = (i%3)*(80 +4);
+            yOrigin = (i/3)*(80 +4);
+            
+            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase + xOrigin]];
+            
+            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:commentLabel attribute:NSLayoutAttributeBottom multiplier:1 constant:8 + yOrigin]];
+            
+            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+            
+            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+            
+            if(i == mediaDataArray.count-1){
+                [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:cell.contentView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:imageButton attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
+            }
+            
+            // whether ISDiskCache has post images
+            if ([diskCache hasObjectForKey:file.url]) {
+                NSLog(@"ISDiskCache has %d th image",i);
+                dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+                dispatch_async(queue, ^{
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        UIImage *smallImage = [diskCache objectForKey:[NSString stringWithFormat:@"%@.small",file.url]];
+                        [imageButton setImage:smallImage forState:UIControlStateNormal];
+                    });
+                });
+            }
+            else{
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFImageResponseSerializer serializer];
+                [manager GET:file.url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    UIImage *image = responseObject;
+                    if(image){
+                        UIImage *smallImage = [image imageByScalingAndCroppingForSize:CGSizeMake(80, 80)];
+                        [diskCache setObject:image forKey:file.url];
+                        [diskCache setObject:smallImage forKey:[NSString stringWithFormat:@"%@.small",file.url]];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [imageButton setImage:smallImage forState:UIControlStateNormal];
+                        });
+                    }
+                } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    NSLog(@"AFNetworking error: %@",error);
+                }];
+            }
+        }
+        
+        
+        
+    }
 
     return cell;
 }
 
 
-//- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-//    if([objectsFound count]==0)
-//        return 0;
-//    else{
-//        PFObject *object = objectsFound[indexPath.row];
-//
-//        if ([NSNull null] == _rowHeights[indexPath.row]) {
-//            _rowHeights[indexPath.row] = [NSNumber numberWithFloat: [CustomCell heightForPFObject:object]];
-//        }
-//        return [_rowHeights[indexPath.row] floatValue];
-//    }
-//}
+- (void)showPortrait:(UIButton *)button{
+    [self performSegueWithIdentifier:@"showPortrait" sender:button];
+}
 
 
+
+- (void)showSenderPosts:(UIButton *)button{
+    [self performSegueWithIdentifier:@"showSenderPosts" sender:button];
+}
+
+
+
+- (void)showImage:(UIButton *)button{
+    [self performSegueWithIdentifier:@"showImage" sender:button];
+}
 
 
 - (IBAction)logout:(id)sender {
@@ -224,9 +475,17 @@
 
 
 
-- (IBAction)showSenderPastPosts:(id)sender{
-    [self performSegueWithIdentifier:@"showSenderPosts" sender:sender];
+- (IBAction)goBackOrNewPost:(id)sender {
+    if(self.currentUserPostsViewController){
+        [self performSegueWithIdentifier:@"newPost" sender:nil];
+    }
+    else{
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
+
+
+
 
 
 - (IBAction)imageButtonPushed:(id)sender {
@@ -234,8 +493,8 @@
     NSIndexPath *indexPath = [self.tableView indexPathForCell:cell];
     PFObject *object = objectsFound[indexPath.row];
     
-    _fileType = [object objectForKey:@"fileType"];
-    if([_fileType isEqualToString:@"image"]){
+    NSString *fileType = [object objectForKey:@"fileType"];
+    if([fileType isEqualToString:@"image"]){
         [self performSegueWithIdentifier:@"showImage" sender:sender];
     }
     else{

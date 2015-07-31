@@ -15,6 +15,7 @@
 + (LocationSingleton *) getInstance;
 
 - (void)setLocation:(CLLocation *)newLocation;
+
 - (CLLocation *)getLocation;
 
 @end

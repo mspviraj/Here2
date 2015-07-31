@@ -8,8 +8,10 @@
 
 #import "MapViewController.h"
 #import "LocationDetailsViewController.h"
+#import "LocationsViewController.h"
 #import "LocationSingleton.h"
 #import "PostDetailViewController.h"
+#import "PlacemarkSingleton.h"
 
 @interface MapViewController () <MKMapViewDelegate, UINavigationBarDelegate>
 
@@ -31,7 +33,6 @@
     
     //pass to the locationsViewController, no use for this mapView
     CLGeocoder *_geocoder;
-    CLPlacemark *_placemark;
     BOOL _performingReverseGeocoding;
     NSError *_lastGeocodingError;
     
@@ -60,7 +61,7 @@
 
 - (void)dealloc
 {
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 
@@ -70,15 +71,7 @@
 
 - (void)viewDidLoad
 {
-  [super viewDidLoad];
-    
-    
-//  [self updateLocations];
-//
-//  if ([objectsFound count] > 0) {
-//    [self showLocations];
-//  }
-    
+    [super viewDidLoad];
 }
 
 
@@ -178,16 +171,11 @@
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    if([segue.identifier isEqualToString:@"newPost"]){
-      UINavigationController *navigationController = segue.destinationViewController;
-      LocationDetailsViewController *controller = (LocationDetailsViewController *)navigationController.topViewController;
-      controller.coordinate = _location.coordinate;
-      controller.placemark = _placemark;
-    }else if([segue.identifier isEqualToString:@"showPostDetail"]){
+    if([segue.identifier isEqualToString:@"showPostDetail"]){
         UINavigationController *navigationController = segue.destinationViewController;
-        PostDetailViewController *controller = (PostDetailViewController *)navigationController.topViewController;
+        LocationsViewController *controller = (LocationsViewController *)navigationController.topViewController;
         UIButton *button = (UIButton *)sender;
-        controller.object = objectsFound[button.tag];
+        controller.PFObjectFromMapView = objectsFound[button.tag];
     }
 }
 
@@ -336,10 +324,11 @@
                 NSLog(@"*** Found placemarks: %@, error: %@", placemarks, error);
                 
                 _lastGeocodingError = error;
+                
+                //set placemark singleton
                 if (error == nil && [placemarks count] > 0) {
-                    _placemark = [placemarks lastObject];
-                } else {
-                    _placemark = nil;
+                    PlacemarkSingleton *placemarkSingleton = [PlacemarkSingleton getInstance];
+                    [placemarkSingleton setPlacemark:[placemarks lastObject]];
                 }
                 
                 _performingReverseGeocoding = NO;

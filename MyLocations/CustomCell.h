@@ -28,6 +28,15 @@
 
 @property (strong,nonatomic) NSString *portraitStringOfUrl;
 
+
+@property (weak, nonatomic) IBOutlet UIButton *mapButton;
+
+@property (strong,nonatomic) IBOutletCollection(UIButton) NSArray *imageButtonCollection;
+
+
+//in order to disable senderButton when the view controller is for a single user (including current user)
+@property (assign,nonatomic) BOOL postsForSingleUser;
+
 + (CGFloat)heightForPFObject:(PFObject *)object;
 
 - (void)configureCellForPFObject:(PFObject *)object;

@@ -1,0 +1,1 @@
+../../../RHManagedObject/RHManagedObject/RHFetchedResultsManager.h

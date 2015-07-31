@@ -33,6 +33,26 @@ NSString * const ManagedObjectContextSaveDidFailNotification = @"ManagedObjectCo
     // [Optional] Track statistics around application opens.
     [PFAnalytics trackAppOpenedWithLaunchOptions:launchOptions];
     
+    
+    
+    
+    UITabBarController *tabBarController = (UITabBarController *)self.window.rootViewController;
+    
+    //set tab bar item title
+    [[tabBarController.tabBar.items objectAtIndex:2] setTitle:@"My Posts"];
+    
+    UINavigationController *navController1 = (UINavigationController *)tabBarController.viewControllers[1];
+    LocationsViewController *controller1 = (LocationsViewController *)navController1.viewControllers[0];
+    controller1.allPostsViewController = YES;
+    
+    UINavigationController *navController2 = (UINavigationController *)tabBarController.viewControllers[2];
+    LocationsViewController *controller2 = (LocationsViewController *)navController2.viewControllers[0];
+    controller2.currentUserPostsViewController = YES;
+    navController2.navigationItem.title = @"My Posts";
+    
+    
+    
+    
     NSArray  *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *docsPath = [paths objectAtIndex:0];
     NSString *dbPath = [docsPath stringByAppendingPathComponent:@"portrait.db"];

@@ -11,6 +11,9 @@
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "UIImage+ResizeAndCrop.h"
 #import "ImageViewController.h"
+#import "LocationSingleton.h"
+#import "PlacemarkSingleton.h"
+
 
 @interface LocationDetailsViewController () <UITextViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate>
 
@@ -77,8 +80,15 @@
 {
     [super viewDidLoad];
     
-    _screenWidth = [[UIScreen mainScreen]bounds].size.width;
-    _screenWidth = [[UIScreen mainScreen]bounds].size.height;
+    //get location singleton
+    LocationSingleton *locationSingleton = [LocationSingleton getInstance];
+    CLLocation *location = [locationSingleton getLocation];
+    self.coordinate = location.coordinate;
+    
+    //get placemark singleton
+    PlacemarkSingleton *placemarkSingleton = [PlacemarkSingleton getInstance];
+    self.placemark = [placemarkSingleton getPlacemark];
+    
     
     _images = [NSMutableArray array];
     _mediaDataArray = [NSMutableArray array];
@@ -91,8 +101,6 @@
 
     if (self.placemark != nil) {
         _address = [self stringFromPlacemark:self.placemark];
-    } else {
-        _address = @"No Address Found";
     }
     
     self.latitudeLabel.text = [NSString stringWithFormat:@"%.8f", self.coordinate.latitude];
@@ -477,7 +485,7 @@
     CGSize newSize = CGSizeMake(width, height);
     CGRect newRectangle = CGRectMake(0, 0, width, height);
     UIGraphicsBeginImageContext(newSize);
-    [_image drawInRect:newRectangle];
+    [image drawInRect:newRectangle];
     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     

@@ -13,17 +13,30 @@
 #import "CustomCell.h"
 
 
-@interface LocationsViewController : UITableViewController <CustomCellDelegate>
+@interface LocationsViewController : UITableViewController 
 
 @property (strong,nonatomic) MPMoviePlayerController *moviePlayer;
 
 @property (strong,nonatomic) UIImage *imageToImageViewController;
 
 
-- (IBAction)imageButtonPushed:(id)sender;
+
+@property (assign,nonatomic) BOOL allPostsViewController;
+
+@property (assign,nonatomic) BOOL currentUserPostsViewController;
+
+@property (strong,nonatomic) PFObject *PFObjectFromMapView;
+
+@property (strong,nonatomic) NSString *senderId;
 
 
 - (IBAction)logout:(id)sender;
+
+
+- (IBAction)goBackOrNewPost:(id)sender;
+
+
+- (IBAction)showMap:(id)sender;
 
 
 @end

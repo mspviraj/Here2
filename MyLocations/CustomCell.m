@@ -23,6 +23,7 @@
 
 
 
+
 @end
 
 
@@ -40,6 +41,17 @@
     PFGeoPoint *_postPosition;
     UIImage *_portrait;
 }
+
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+
 
 
 + (CGFloat)heightForPFObject:(PFObject *)object{
@@ -175,11 +187,11 @@
     //whether there is media uploaded and how many media files it contains, 1 or more
     
     if(_mediaDataArray.count == 0){
-        self.viewOfImage.hidden = YES;
+        //self.viewOfImage.hidden = YES;
         [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.dateLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.commentLabel attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
     }
     else if(_mediaDataArray.count == 1){
-        [self.viewOfImage setBackgroundColor:[UIColor whiteColor]];
+        //[self.viewOfImage setBackgroundColor:[UIColor whiteColor]];
         PFFile *file = _mediaDataArray[0];
         [self.arrayOfUrls addObject:file.url];
         
@@ -189,16 +201,28 @@
             dispatch_async(queue, ^{
                 dispatch_async(dispatch_get_main_queue(), ^{
                     UIImage *smallImage = [diskCache objectForKey:[NSString stringWithFormat:@"%@.small",file.url]];
-                    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+                    
+                    UIButton *button = self.imageButtonCollection[0];
                     [button addTarget:self
                                action:@selector(showImage:)
                      forControlEvents:UIControlEventTouchUpInside];
-                    button.frame = CGRectMake(0, 0, smallImage.size.width, smallImage.size.height);
+                    //button.frame = CGRectMake(0, 0, smallImage.size.width, smallImage.size.height);
                     button.tag = 0;
                     [button setBackgroundColor:[UIColor lightGrayColor]];
+                    
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:smallImage.size.height]];
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:smallImage.size.width]];
+                    
                     [button setImage:smallImage forState:UIControlStateNormal];
-                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:button.frame.size.height]];
-                    [self.viewOfImage addSubview:button];
+                    //[self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:button.frame.size.height]];
+                    //[self.viewOfImage addSubview:button];
+                    
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.dateLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:button attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
+                    
+                    for(int i=1;i<9;++i){
+                        UIButton *buton = self.imageButtonCollection[i];
+                        buton.hidden = YES;
+                    }
                 });
             });
         }
@@ -208,7 +232,7 @@
             [manager GET:file.url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 UIImage *image = responseObject;
                 if(image){
-                    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+                    UIButton *button = self.imageButtonCollection[0];
                     [button addTarget:self
                                action:@selector(showImage:)
                      forControlEvents:UIControlEventTouchUpInside];
@@ -222,17 +246,28 @@
                         resizedHeight = image.size.height/image.size.width * 200;
                         resizedWidth = 200;
                     }
-                    button.frame = CGRectMake(0, 0, resizedWidth, resizedHeight);
+                    //button.frame = CGRectMake(0, 0, resizedWidth, resizedHeight);
                     button.tag = 0;
                     [button setBackgroundColor:[UIColor lightGrayColor]];
-                    UIImage *smallImage = [image imageByScalingAndCroppingForSize:button.frame.size];
+                    
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:resizedHeight]];
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:resizedWidth]];
+                    
+                    UIImage *smallImage = [image imageByScalingAndCroppingForSize:CGSizeMake(resizedWidth, resizedHeight)];
                     [button setImage:smallImage forState:UIControlStateNormal];
+                    
+                    for(int i=1;i<9;++i){
+                        UIButton *buton = self.imageButtonCollection[i];
+                        buton.hidden = YES;
+                    }
                     
                     [diskCache setObject:image forKey:file.url];
                     [diskCache setObject:smallImage forKey:[NSString stringWithFormat:@"%@.small",file.url]];
                     
-                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:resizedHeight]];
-                    [self.viewOfImage addSubview:button];
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.dateLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:button attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
+                    
+                    //[self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:resizedHeight]];
+                    //[self.viewOfImage addSubview:button];
                 }
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 NSLog(@"AFNetworking error: %@",error);
@@ -240,10 +275,10 @@
         }
     }
     else{       //more than 1 image
-        CGFloat viewOfImageHeight = ((_mediaDataArray.count-1) /3 + 1) * (80+4) - 4;
-        [self.viewOfImage setBackgroundColor:[UIColor whiteColor]];
-        self.viewOfImage.translatesAutoresizingMaskIntoConstraints  = NO;
-        [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:viewOfImageHeight]];
+        //CGFloat viewOfImageHeight = ((_mediaDataArray.count-1) /3 + 1) * (80+4) - 4;
+        //[self.viewOfImage setBackgroundColor:[UIColor whiteColor]];
+        //self.viewOfImage.translatesAutoresizingMaskIntoConstraints  = NO;
+        //[self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.viewOfImage attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:viewOfImageHeight]];
         NSLog(@"%d photos received",_mediaDataArray.count);
         
         if([_mediaType isEqualToString:@"image"]){
@@ -252,17 +287,37 @@
                 PFFile *file = _mediaDataArray[i];
                 [self.arrayOfUrls addObject:file.url];
                 
-                CGFloat xOrigin = (i%3)*(80 +4);
-                CGFloat yOrigin = (i/3)*(80 +4);
+//                CGFloat xOrigin;
+//                CGFloat yOrigin;
+//                
+//                if(_mediaDataArray.count == 4 && (i==2 || i==3)){
+//                    xOrigin = ((i+1) %3)*(80 +4);
+//                    yOrigin = ((i+1) /3)*(80 +4);
+//                }
+//                else{
+//                    xOrigin = (i%3)*(80 +4);
+//                    yOrigin = (i/3)*(80 +4);
+//                }
                 
-                UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+                UIButton *button = self.imageButtonCollection[i];
                 [button addTarget:self
                            action:@selector(showImage:)
                  forControlEvents:UIControlEventTouchUpInside];
-                button.frame = CGRectMake(xOrigin, yOrigin, 80, 80);
+                //button.frame = CGRectMake(xOrigin, yOrigin, 80, 80);
                 button.tag = i;
                 [button setBackgroundColor:[UIColor lightGrayColor]];
-                [self.viewOfImage addSubview:button];
+                
+                if(i==0){
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:button attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+                }
+                if(i == (_mediaDataArray.count-1)){
+                    [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.dateLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:button attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
+                }
+                
+                
+                
+                //[self.viewOfImage addSubview:button];
 
                 
                 
@@ -302,8 +357,12 @@
             //_image = [player thumbnailImageAtTime:1 timeOption:MPMovieTimeOptionExact];
 
         }
+        
+        for(int i=_mediaDataArray.count;i<9;++i){
+            UIButton *button = self.imageButtonCollection[i];
+            button.hidden = YES;
+        }
     }
-    
     
     
     //deal with other labels and buttons
@@ -318,6 +377,11 @@
     
     self.commentLabel.text = _descriptionText;
     self.distanceLabel.text = [NSString stringWithFormat:@"%.1f miles from here.",distance/1609];
+    
+    if(self.postsForSingleUser){
+        self.senderButton.hidden = YES;
+        [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.commentLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
+    }
     
 }
 
@@ -342,5 +406,6 @@
 
     // Configure the view for the selected state
 }
+
 
 @end
