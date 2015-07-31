@@ -18,6 +18,8 @@
 #import "FMDB.h"
 #import "AFNetworking.h"
 #import "UIImage+ResizeAndCrop.h"
+#import "Masonry.h"
+#import "UIConstants.h"
 
 
 @interface LocationsViewController ()
@@ -69,6 +71,10 @@
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 44;
     
+    //get singleton location
+    LocationSingleton *singleton = [LocationSingleton getInstance];
+    _newLocation = [singleton getLocation];
+    
     _stringOfPortraitUrls = [NSMutableArray array];
     self.moviePlayer = [[MPMoviePlayerController alloc] init];
     
@@ -76,12 +82,6 @@
     if(self.currentUserPostsViewController && !currentUser){
         [self performSegueWithIdentifier:@"showLogin" sender:self];
     }
-    
-    
-    //get singleton location
-    LocationSingleton *singleton = [LocationSingleton getInstance];
-    _newLocation = [singleton getLocation];
-    
     
     //deal with it in viewWillAppear
     if(self.currentUserPostsViewController){
@@ -232,42 +232,43 @@
     NSString *categoryName = [object objectForKey:@"category"];
     PFGeoPoint *postPosition = [object objectForKey:@"position"];
     NSDate *date = object.createdAt;
-    CGFloat xBase = 61;
+    
+    CGFloat xBase = [UIConstants getPortraitWidth] + 2*SMALL_GAP;
 
-    
-    
     static NSString *cellIdentifier = @"Cell";
+    
     UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:nil];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-
-        
-        
-        
         
         //configure portrait butotn,  use FMDB to store the portrait's url string
         UIButton *portraitButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [cell.contentView addSubview:portraitButton];
         portraitButton.translatesAutoresizingMaskIntoConstraints = NO;
-        
         [portraitButton addTarget:self action:@selector(showPortrait:)forControlEvents:UIControlEventTouchUpInside];
-        [portraitButton setBackgroundColor:[UIColor lightGrayColor]];
+        [portraitButton setBackgroundColor:[UIConstants getLightColor]];
+        [cell.contentView addSubview:portraitButton];
         
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:8]];
+        [portraitButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.equalTo(cell.contentView.mas_top).with.offset(SMALL_GAP);
+            make.left.equalTo(cell.contentView.mas_left).with.offset(SMALL_GAP);
+            make.height.equalTo(@([UIConstants getPortraitWidth]));
+            make.width.equalTo(@([UIConstants getPortraitWidth]));
+        }];
         
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:8]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:portraitButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:45]];
         
         //get FMDB
         NSArray  *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
         NSString *docsPath = [paths objectAtIndex:0];
         NSString *dbPath = [docsPath stringByAppendingPathComponent:@"portrait.db"];
         FMDatabase *db = [FMDatabase databaseWithPath:dbPath];
-        
         if(![db open]){
             NSLog(@"can't open database in UITableViewCell");
         }
@@ -275,7 +276,6 @@
         NSString *stringOfUrl;
         NSMutableArray *urls = [NSMutableArray array];
         int count = 0;
-        
         while ([resultSet next]) {
             [urls addObject:[resultSet stringForColumn:@"url"]];
             count++;
@@ -342,18 +342,26 @@
                    action:@selector(showSenderPosts:)
          forControlEvents:UIControlEventTouchUpInside];
         [senderButton setTitle:senderName forState:UIControlStateNormal];
-        [senderButton.titleLabel setFont:[UIFont systemFontOfSize:18]];
+        [senderButton.titleLabel setFont:[UIFont fontWithName:[UIConstants getTextFontName] size:[UIConstants getSenderButtonFontSize]]];
+        //[senderButton.titleLabel setFont:[UIFont systemFontOfSize:18]];
         senderButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
         senderButton.translatesAutoresizingMaskIntoConstraints = NO;
         [cell.contentView addSubview:senderButton];
+        
+        [senderButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.equalTo(cell.contentView.mas_top).with.offset(SMALL_GAP);
+            make.left.equalTo(portraitButton.mas_right).with.offset(SMALL_GAP);
+            make.right.equalTo(cell.contentView.mas_right).with.offset(-SMALL_GAP);
+            make.height.equalTo(@([UIConstants getSenderButtonHeight]));
+        }];
 
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:18]];
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:senderButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:18]];
         
         
         
@@ -361,28 +369,25 @@
         //configure commentLabel
         UILabel *commentLabel = [[UILabel alloc]init];
         commentLabel.text = descriptionText;
-        commentLabel.font = [UIFont systemFontOfSize:15];
+        commentLabel.font = [UIFont fontWithName:[UIConstants getTextFontName] size:[UIConstants getCommentLabelFontSize]];
+        //commentLabel.font = [UIFont systemFontOfSize:15];
         commentLabel.numberOfLines = 0;
-        //commentLabel.baselineAdjustment = UIBaselineAdjustmentAlignBaselines; // or UIBaselineAdjustmentAlignCenters, or UIBaselineAdjustmentNone
-        //commentLabel.adjustsFontSizeToFitWidth = YES;
-        //commentLabel.minimumScaleFactor = 10.0f/12.0f;
-        //commentLabel.clipsToBounds = YES;
-        //commentLabel.textColor = [UIColor blackColor];
         commentLabel.textAlignment = NSTextAlignmentLeft;
         commentLabel.lineBreakMode = NSLineBreakByWordWrapping;
         commentLabel.translatesAutoresizingMaskIntoConstraints = NO;
         [cell.contentView addSubview:commentLabel];
         
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
+        [commentLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.equalTo(senderButton.mas_bottom).with.offset(-SMALLER_GAP);
+            make.left.equalTo(portraitButton.mas_right).with.offset(SMALL_GAP);
+            make.right.equalTo(cell.contentView.mas_right).with.offset(-SMALL_GAP);
+        }];
         
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8 + 18 +4]];
-        
-        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
-
-        
-        
-        
-        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTop multiplier:1 constant:8 + 18 +4]];
+//        
+//        [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:commentLabel attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeTrailing multiplier:1 constant:-8]];
         
         //configue image views
         for(int i=0; i<mediaDataArray.count; ++i){
@@ -391,27 +396,37 @@
             UIButton *imageButton  = [UIButton buttonWithType:UIButtonTypeCustom];
             [imageButton addTarget:self action:@selector(showImage:) forControlEvents:UIControlEventTouchUpInside];
             imageButton.tag = i;
-            [imageButton setBackgroundColor:[UIColor lightGrayColor]];
+            [imageButton setBackgroundColor:[UIConstants getLightColor]];
             imageButton.translatesAutoresizingMaskIntoConstraints = NO;
             [cell.contentView addSubview:imageButton];
             
             CGFloat xOrigin;
             CGFloat yOrigin;
             
-            xOrigin = (i%3)*(80 +4);
-            yOrigin = (i/3)*(80 +4);
+            xOrigin = (i % NUMBER_OF_IMAGES_PER_ROW) * ([UIConstants getThumbnailWidth] + SMALLER_GAP);
+            yOrigin = (i / NUMBER_OF_IMAGES_PER_ROW)*([UIConstants getThumbnailWidth] + SMALLER_GAP);
             
-            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase + xOrigin]];
+            [imageButton mas_makeConstraints:^(MASConstraintMaker *make) {
+                make.top.equalTo(commentLabel.mas_bottom).with.offset(SMALL_GAP);
+                make.left.equalTo(portraitButton.mas_right).with.offset(SMALL_GAP + xOrigin);
+                make.width.equalTo(@([UIConstants getThumbnailWidth]));
+                make.height.equalTo(@([UIConstants getThumbnailWidth]));
+                if(i == mediaDataArray.count-1){
+                    make.bottom.equalTo(cell.contentView.mas_bottom).width.offset(-SMALL_GAP);
+                }
+            }];
             
-            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:commentLabel attribute:NSLayoutAttributeBottom multiplier:1 constant:8 + yOrigin]];
-            
-            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
-            
-            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
-            
-            if(i == mediaDataArray.count-1){
-                [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:cell.contentView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:imageButton attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
-            }
+//            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:cell.contentView attribute:NSLayoutAttributeLeading multiplier:1 constant:xBase + xOrigin]];
+//            
+//            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:commentLabel attribute:NSLayoutAttributeBottom multiplier:1 constant:8 + yOrigin]];
+//            
+//            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+//            
+//            [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:imageButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:0 multiplier:1 constant:80]];
+//            
+//            if(i == mediaDataArray.count-1){
+//                [cell.contentView addConstraint:[NSLayoutConstraint constraintWithItem:cell.contentView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:imageButton attribute:NSLayoutAttributeBottom multiplier:1 constant:8]];
+//            }
             
             // whether ISDiskCache has post images
             if ([diskCache hasObjectForKey:file.url]) {
