@@ -8,12 +8,12 @@
 
 
 #import <MediaPlayer/MediaPlayer.h>
-#import "ImageViewController.h"
-#import "SYFrameHelper.h"
-#import "CustomCell.h"
+#import <Parse/Parse.h>
+#import "MWPhotoBrowser.h"
 
 
-@interface LocationsViewController : UITableViewController 
+
+@interface LocationsViewController : UITableViewController <MWPhotoBrowserDelegate>
 
 @property (strong,nonatomic) MPMoviePlayerController *moviePlayer;
 

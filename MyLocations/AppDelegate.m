@@ -48,6 +48,7 @@ NSString * const ManagedObjectContextSaveDidFailNotification = @"ManagedObjectCo
     UINavigationController *navController2 = (UINavigationController *)tabBarController.viewControllers[2];
     LocationsViewController *controller2 = (LocationsViewController *)navController2.viewControllers[0];
     controller2.currentUserPostsViewController = YES;
+    
     navController2.navigationItem.title = @"My Posts";
     
     

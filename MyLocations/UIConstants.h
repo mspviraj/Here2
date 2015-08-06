@@ -26,6 +26,16 @@
 #define BUTTON_HOR_PADDING (0)
 #define BUTTON_BOTTOM_PADDING (0)
 #define BUTTON_HEIGHT (50)
+#define PORTRAIT_WIDTH (45)
+#define SENDER_BUTTON_HEIGHT (18)
+#define DATE_LABEL_HEIGHT (12)
+#define DISTANCE_LABEL_HEIGHT (12)
+#define THUMBNAIL_WIDTH (80)
+
+#define SENDER_BUTTON_FONT_SIZE (18)
+#define COMMENT_LABEL_FONT_SIZE (15)
+#define DATE_LABEL_FONT_SIZE (11.f)
+#define DISTANCE_LABEL_FONT_SIZE (11.f)
 
 #define UPLOAD_BUTTON_HOR_MARGIN (100)
 #define COMPUTER_UPLOAD_BUTTON_TOP_MARGIN (80)
@@ -57,19 +67,10 @@
 @interface UIConstants : NSObject
 
 #pragma mark - Helper functions
-+(CGFloat)getPortraitWidth;
-+(CGFloat)getSenderButtonHeight;
-+(CGFloat)getDateLabelHeight;
-+(CGFloat)getDistanceLabelHeight;
-+(CGFloat)getThumbnailWidth;
 +(CGFloat)scaleWidth:(CGFloat)width;
 +(CGFloat)scaleHeight:(CGFloat)height;
 
 #pragma mark - FONTS
-+(CGFloat)getSenderButtonFontSize;
-+(CGFloat)getCommentLabelFontSize;
-+(CGFloat)getDateLabelFontSize;
-+(CGFloat)getDistanceLabelFontSize;
 +(NSString *)getTextFontName;
 
 #pragma mark - COLORS
