@@ -15,6 +15,14 @@
 @property (weak, nonatomic) IBOutlet UITextField *passwordField;
 @property (weak, nonatomic) IBOutlet UITextField *emailField;
 
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
+
+@property (weak, nonatomic) IBOutlet UIButton *addButton;
+
+
+- (IBAction)addOrChangePhoto:(id)sender;
+
+
 - (IBAction)signup:(id)sender;
 
 

@@ -11,7 +11,7 @@
 
 @interface ImageViewController : UIViewController
 
-@property (strong,nonatomic) PFObject *object;
+@property (strong,nonatomic) UIImage *image;
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
 

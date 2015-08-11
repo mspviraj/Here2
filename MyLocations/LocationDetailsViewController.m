@@ -9,6 +9,11 @@
 #import "LocationDetailsViewController.h"
 #import "CategoryPickerViewController.h"
 #import <MobileCoreServices/UTCoreTypes.h>
+#import "UIImage+ResizeAndCrop.h"
+#import "ImageViewController.h"
+#import "LocationSingleton.h"
+#import "PlacemarkSingleton.h"
+
 
 @interface LocationDetailsViewController () <UITextViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate>
 
@@ -18,23 +23,33 @@
 @property (nonatomic, weak) IBOutlet UILabel *longitudeLabel;
 @property (nonatomic, weak) IBOutlet UILabel *addressLabel;
 @property (nonatomic, weak) IBOutlet UILabel *dateLabel;
-@property (nonatomic, weak) IBOutlet UIImageView *imageView;
-@property (nonatomic, weak) IBOutlet UILabel *photoLabel;
-
 
 @end
 
+
+
+
 @implementation LocationDetailsViewController
 {
+    CGFloat _screenWidth;
+    CGFloat _screenHeight;
     NSString *_descriptionText;
     NSString *_address;
     NSString *_categoryName;
     NSDate *_date;
+    
     UIImage *_image;
+    NSMutableArray *_images;
     NSString *_videoFilePath;
+    NSMutableArray *_mediaDataArray;
+
     UIActionSheet *_actionSheet;
     UIImagePickerController *_imagePicker;
+    NSUInteger _scrollViewIndex;
 }
+
+
+
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
@@ -52,6 +67,8 @@
   return self;
 }
 
+
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -61,30 +78,44 @@
 
 - (void)viewDidLoad
 {
-  [super viewDidLoad];
+    [super viewDidLoad];
     
+    //get location singleton
+    LocationSingleton *locationSingleton = [LocationSingleton getInstance];
+    CLLocation *location = [locationSingleton getLocation];
+    self.coordinate = location.coordinate;
+    
+    //get placemark singleton
+    PlacemarkSingleton *placemarkSingleton = [PlacemarkSingleton getInstance];
+    self.placemark = [placemarkSingleton getPlacemark];
+    
+    
+    _images = [NSMutableArray array];
+    _mediaDataArray = [NSMutableArray array];
+    
+    _scrollViewIndex = 0;
     
 
-    
-  self.descriptionTextView.text = _descriptionText;
-  self.categoryLabel.text = _categoryName;
+    self.descriptionTextView.text = _descriptionText;
+    self.categoryLabel.text = _categoryName;
 
     if (self.placemark != nil) {
         _address = [self stringFromPlacemark:self.placemark];
-    } else {
-        _address = @"No Address Found";
     }
     
-  self.latitudeLabel.text = [NSString stringWithFormat:@"%.8f", self.coordinate.latitude];
-  self.longitudeLabel.text = [NSString stringWithFormat:@"%.8f", self.coordinate.longitude];
+    self.latitudeLabel.text = [NSString stringWithFormat:@"%.8f", self.coordinate.latitude];
+    self.longitudeLabel.text = [NSString stringWithFormat:@"%.8f", self.coordinate.longitude];
     self.addressLabel.text = _address;
 
-  self.dateLabel.text = [self formatDate:_date];
+    self.dateLabel.text = [self formatDate:_date];
 
   UITapGestureRecognizer *gestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard:)];
   gestureRecognizer.cancelsTouchesInView = NO;
   [self.tableView addGestureRecognizer:gestureRecognizer];
 }
+
+
+
 
 
 - (void)applicationDidEnterBackground {
@@ -118,6 +149,8 @@
   [self.descriptionTextView resignFirstResponder];
 }
 
+
+
 - (NSString *)stringFromPlacemark:(CLPlacemark *)placemark
 {
   return [NSString stringWithFormat:@"%@ %@, %@, %@ %@, %@",
@@ -125,6 +158,8 @@
     placemark.locality, placemark.administrativeArea,
     placemark.postalCode, placemark.country];
 }
+
+
 
 - (NSString *)formatDate:(NSDate *)theDate
 {
@@ -138,22 +173,16 @@
   return [formatter stringFromDate:theDate];
 }
 
+
+
+
 - (IBAction)done:(id)sender
 {
-    if (_image == nil && [_videoFilePath length] == 0) {
+    if ([_descriptionText length]==0 &&  _image == nil && [_videoFilePath length] == 0) {
         UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Try again!"
-            message:@"Please capture or select a photo or video to share!"
+            message:@"Please express what's in your mind or capture or select a photo or video to share!"
             delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
         [alertView show];
-        
-        _imagePicker = [[UIImagePickerController alloc] init];
-        _imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
-        _imagePicker.delegate = self;
-        _imagePicker.allowsEditing = YES;
-        _imagePicker.videoMaximumDuration = 10;
-        _imagePicker.mediaTypes = [UIImagePickerController availableMediaTypesForSourceType:_imagePicker.sourceType];
-        
-        [self presentViewController:_imagePicker animated:NO completion:nil];
     }
     else {
         [self uploadMessage];
@@ -162,10 +191,15 @@
     }
 }
 
+
+
+
 - (IBAction)cancel:(id)sender
 {
   [self closeScreen];
 }
+
+
 
 - (void)closeScreen
 {
@@ -173,11 +207,17 @@
 }
 
 
+
+
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
   if ([segue.identifier isEqualToString:@"PickCategory"]) {
     CategoryPickerViewController *controller = segue.destinationViewController;
     controller.selectedCategoryName = _categoryName;
+  }else if([segue.identifier isEqualToString:@"showImage"]){
+      UIButton *button = (UIButton *)sender;
+      ImageViewController *controller = (ImageViewController *)segue.destinationViewController;
+      controller.image = [_images objectAtIndex:button.tag];
   }
 }
 
@@ -194,33 +234,29 @@
 
 #pragma mark - UITableViewDelegate
 
+
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   if (indexPath.section == 0 && indexPath.row == 0) {
-    return 88;
+          return 88;
   } else if (indexPath.section == 1 && indexPath.row == 0) {
-      if(self.imageView.hidden){
+      
+      if(_scrollView.hidden){
           return 44;
       }else{
-          return 280;
+          return 48 + 180;
       }
-  } else if (indexPath.section == 2 && indexPath.row == 2) {
+      
+  } else if (indexPath.section == 1 && indexPath.row == 3) {
 
-    // UILabels can display their content in multiple rows but this takes
-    // some trickery. We first say to the label: this is your width, now
-    // try to fit all the text in there (sizeToFit). This resizes both the
-    // label's width and height.
-
-    CGRect rect = CGRectMake(100, 10, 205, 10000);
-    self.addressLabel.frame = rect;
-    [self.addressLabel sizeToFit];
-
-    // We want the width to remain at 205 points, so we resize the label
-    // afterwards to the proper dimensions.
-    rect.size.height = self.addressLabel.frame.size.height;
-    self.addressLabel.frame = rect;
-
-    return self.addressLabel.frame.size.height + 20;
+      UIFont *font = [UIFont systemFontOfSize:15];
+      CGSize constraint = CGSizeMake(150 ,NSUIntegerMax);
+      NSDictionary *attributes = @{NSFontAttributeName: font};
+      CGRect rect = [_address boundingRectWithSize:constraint
+                                         options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading)
+                                      attributes:attributes 
+                                         context:nil];
+      return rect.size.height + 16;
   } else {
     return 44;
   }
@@ -243,7 +279,7 @@
   }
   else if (indexPath.section == 1 && indexPath.row == 0) {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    [self showPhotoMenu];
+    //[self showPhotoMenu];
   }
 }
 
@@ -300,25 +336,22 @@
     if ([mediaType isEqualToString:(NSString *)kUTTypeImage]) {
         // A photo was taken/selected!
         _image = [info objectForKey:UIImagePickerControllerOriginalImage];
-        if (_imagePicker.sourceType == UIImagePickerControllerSourceTypeCamera) {
-            // Save the image!
-            UIImageWriteToSavedPhotosAlbum(_image, nil, nil, nil);
-        }
     }
-    else {
-        // A video was taken/selected!
-        NSURL *imagePickerURL = [info objectForKey:UIImagePickerControllerMediaURL];
-        _videoFilePath = [imagePickerURL path];
-        if (_imagePicker.sourceType == UIImagePickerControllerSourceTypeCamera) {
-            // Save the video!
-            if (UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(_videoFilePath)) {
-                UISaveVideoAtPathToSavedPhotosAlbum(_videoFilePath, nil, nil, nil);
-            }
-        }
-    }
+//    else {
+//        // A video was taken/selected!
+//        NSURL *imagePickerURL = [info objectForKey:UIImagePickerControllerMediaURL];
+//        _videoFilePath = [imagePickerURL path];
+//        if (_imagePicker.sourceType == UIImagePickerControllerSourceTypeCamera) {
+//            // Save the video!
+//            if (UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(_videoFilePath)) {
+//                UISaveVideoAtPathToSavedPhotosAlbum(_videoFilePath, nil, nil, nil);
+//            }
+//        }
+//    }
     
-    
-    [self showImage:_image];
+    UIImage *resizedImage = [self resizeImage:_image toWidth:320.0f andHeight:480.0f];
+    [_images addObject:resizedImage];
+    [self showImage:resizedImage];
     [self.tableView reloadData];
     [self dismissViewControllerAnimated:YES completion:nil];
     _imagePicker = nil;
@@ -350,70 +383,101 @@
 #pragma mark - Helper methods
 
 - (void)showImage:(UIImage *)image {
-    self.imageView.image = image;
-    self.imageView.hidden = NO;
-    self.imageView.frame = CGRectMake(10, 10, 260, 260);
-    self.photoLabel.hidden = YES;
+    if(self.scrollView.hidden){
+        self.scrollView.hidden = NO;
+    }
+    CGFloat xOrigin =  _scrollViewIndex * (120 + 8);
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    [button addTarget:self action:@selector(showImageSegue:) forControlEvents:UIControlEventTouchUpInside];
+    
+    button.frame = CGRectMake(xOrigin, 0, 120, 180);
+    UIImage *smallImage = [image imageByScalingAndCroppingForSize:button.frame.size];
+    [button setImage:smallImage forState:UIControlStateNormal];
+    
+    button.tag = _scrollViewIndex;
+    [self.scrollView addSubview:button];
+    
+    //set the scroll view content size
+    _scrollViewIndex++;
+    self.scrollView.contentSize = CGSizeMake((120 + 8)*_scrollViewIndex, 180);
+    
+    //let the new added photo always in view
+    if(self.scrollView.contentSize.width > self.scrollView.frame.size.width){
+        CGPoint endOffset = CGPointMake(self.scrollView.contentSize.width - self.scrollView.frame.size.width,0);
+        [self.scrollView setContentOffset:endOffset];
+    }
+
 }
 
 
+- (void)showImageSegue:(UIButton *)button{
+    [self performSegueWithIdentifier:@"showImage" sender:button];
+}
+
+
+
+
+
 - (void)uploadMessage {
-    NSData *fileData;
-    NSString *fileName;
-    NSString *fileType;
+//    NSData *fileData;
+//    NSString *fileName;
+//    NSString *fileType;
     NSString *text;
     NSString *address;
     NSString *category;
+    NSString *mediaType;
     PFGeoPoint *position;
     
     
-    if (_image != nil) {
-        UIImage *newImage = [self resizeImage:_image toWidth:320.0f andHeight:480.0f];
-        fileData = UIImagePNGRepresentation(newImage);
-        fileName = @"image.png";
-        fileType = @"image";
-    }
-    else {
-        fileData = [NSData dataWithContentsOfFile:_videoFilePath];
-        fileName = @"video.mov";
-        fileType = @"video";
-    }
+    
+//    if (_image != nil) {
+//        UIImage *newImage = [self resizeImage:_image toWidth:320.0f andHeight:480.0f];
+//        fileData = UIImagePNGRepresentation(newImage);
+//        fileName = @"image.png";
+//        fileType = @"image";
+//    }
+//    else {
+//        fileData = [NSData dataWithContentsOfFile:_videoFilePath];
+//        fileName = @"video.mov";
+//        fileType = @"video";
+//    }
     
     text = _descriptionText;
     address = _address;
     category = _categoryName;
     position = [PFGeoPoint geoPointWithLatitude:_coordinate.latitude longitude:_coordinate.longitude];
+    mediaType = @"image";
     
-    PFFile *file = [PFFile fileWithName:fileName data:fileData];
-    [file saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+    //PFFile *file = [PFFile fileWithName:fileName data:fileData];
+    for(NSUInteger i=0; i<_images.count; ++i){
+        NSData *fileData = UIImagePNGRepresentation(_images[i]);
+        NSString *fileName = [NSString stringWithFormat:@"image%d",i];
+        PFFile *file = [PFFile fileWithName:fileName data:fileData];
+        [_mediaDataArray addObject:file];
+    }
+    
+    
+    PFObject *message = [PFObject objectWithClassName:@"Messages"];
+    [message setObject:_mediaDataArray forKey:@"mediaData"];
+    [message setObject:mediaType forKey:@"mediaType"];
+    [message setObject:[[PFUser currentUser] objectId] forKey:@"senderId"];
+    [message setObject:[[PFUser currentUser] username] forKey:@"senderName"];
+    [message setObject:text forKey:@"text"];
+    [message setObject:address forKey:@"address"];
+    [message setObject:position forKey:@"position"];
+    [message setObject:category forKey:@"category"];
+
+    [message saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         if (error) {
-            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred!" message:@"Please try sending your message again."
-            delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred!" message:@"Please try sending your message again." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
             [alertView show];
         }
         else {
-            PFObject *message = [PFObject objectWithClassName:@"Messages"];
-            [message setObject:file forKey:@"file"];
-            [message setObject:fileType forKey:@"fileType"];
-            [message setObject:[[PFUser currentUser] objectId] forKey:@"senderId"];
-            [message setObject:[[PFUser currentUser] username] forKey:@"senderName"];
-            [message setObject:text forKey:@"text"];
-            [message setObject:address forKey:@"address"];
-            [message setObject:position forKey:@"position"];
-            [message setObject:category forKey:@"category"];
-            
-            [message saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-                if (error) {
-                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"An error occurred!" message:@"Please try sending your message again." delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
-                    [alertView show];
-                }
-                else {
-                    // Everything was successful!
-                    [self reset];
-                }
-            }];
+            // Everything was successful!
+            [self reset];
         }
     }];
+
 }
 
 
@@ -421,7 +485,7 @@
     CGSize newSize = CGSizeMake(width, height);
     CGRect newRectangle = CGRectMake(0, 0, width, height);
     UIGraphicsBeginImageContext(newSize);
-    [_image drawInRect:newRectangle];
+    [image drawInRect:newRectangle];
     UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     
@@ -434,4 +498,7 @@
 }
 
 
+- (IBAction)addPhoto:(id)sender {
+    [self showPhotoMenu];
+}
 @end

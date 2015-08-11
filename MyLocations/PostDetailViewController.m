@@ -158,7 +158,7 @@
         controller.senderId = _senderId;
     } else if ([segue.identifier isEqualToString:@"showImage"]){
         ImageViewController *controller = (ImageViewController *)segue.destinationViewController;
-        controller.object = self.object;
+        //controller.object = self.object;
     } else if ([segue.identifier isEqualToString:@"showMapView"]){
         UINavigationController *navigationController = (UINavigationController *)segue.destinationViewController;
         SinglePostMapViewController *controller = (SinglePostMapViewController *)navigationController.topViewController;

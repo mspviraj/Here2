@@ -8,19 +8,35 @@
 
 
 #import <MediaPlayer/MediaPlayer.h>
-#import "ImageViewController.h"
-#import "SYFrameHelper.h"
+#import <Parse/Parse.h>
+#import "MWPhotoBrowser.h"
 
 
-@interface LocationsViewController : UITableViewController
+
+@interface LocationsViewController : UITableViewController <MWPhotoBrowserDelegate>
 
 @property (strong,nonatomic) MPMoviePlayerController *moviePlayer;
 
+@property (strong,nonatomic) UIImage *imageToImageViewController;
 
-- (IBAction)imageButtonPushed:(id)sender;
+
+
+@property (assign,nonatomic) BOOL allPostsViewController;
+
+@property (assign,nonatomic) BOOL currentUserPostsViewController;
+
+@property (strong,nonatomic) PFObject *PFObjectFromMapView;
+
+@property (strong,nonatomic) NSString *senderId;
 
 
 - (IBAction)logout:(id)sender;
+
+
+- (IBAction)goBackOrNewPost:(id)sender;
+
+
+- (IBAction)showMap:(id)sender;
 
 
 @end
