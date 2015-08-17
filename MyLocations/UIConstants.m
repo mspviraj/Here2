@@ -32,7 +32,7 @@
 
 +(UIColor*)getSenderButtonColor
 {
-    return [UIColor blueColor];
+    return [UIColor colorWithRed:239.0f/255.0f green:239.0f/255.0f blue:240.0f/255.0f alpha:1.0];
 }
 
 +(UIColor*)getDefaultButtonColor
@@ -42,7 +42,7 @@
 
 +(UIColor*)getLightColor
 {
-    return [UIColor lightGrayColor];
+    return [UIColor colorWithRed:229.0f/255.0f green:229.0f/255.0f blue:229.0f/255.0f alpha:1.0];
 }
 
 +(UIColor*)getThemeColor
@@ -64,7 +64,6 @@
 {
     return [UIColor colorWithRed:237.0/255.0 green:144.0/255.0 blue:121.0/255.0 alpha:1];
 }
-
 
 
 @end

@@ -10,7 +10,6 @@
 #import "LocationDetailsViewController.h"
 #import "LocationsViewController.h"
 #import "LocationSingleton.h"
-#import "PostDetailViewController.h"
 #import "PlacemarkSingleton.h"
 
 @interface MapViewController () <MKMapViewDelegate, UINavigationBarDelegate>

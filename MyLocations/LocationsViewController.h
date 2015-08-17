@@ -10,10 +10,11 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <Parse/Parse.h>
 #import "MWPhotoBrowser.h"
+#import "PhotosView.h"
 
 
 
-@interface LocationsViewController : UITableViewController <MWPhotoBrowserDelegate>
+@interface LocationsViewController : UITableViewController <MWPhotoBrowserDelegate, PhotosViewDelegate>
 
 @property (strong,nonatomic) MPMoviePlayerController *moviePlayer;
 
